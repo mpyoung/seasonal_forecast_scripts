@@ -2,7 +2,7 @@
 
 Scripts to download, subset and process seasonal rainfall hindcasts (re-forecasts) from the Copernicus Climate Change Service Climate Data Store (https://cds.climate.copernicus.eu/#!/home)
 
-M. Young, Thursday 7/5/2020
+M. Young, 7/5/2020
 
 List of scripts:
 
