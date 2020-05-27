@@ -33,11 +33,11 @@ dir_out = dir_main+'c3s_hindcasts/region_subsets/'
 # region = 'Africa'
 # latlim = [-35,35]
 # lonlim = [-20,52]
-# region = 'Kenya'
-# latlim = [-5,5]
-# lonlim = [33,43]
-# start_mon = [10,11,12] # OND, ND, D
-# end_mon = [12,12,12] # OND, ND, D
+region = 'Kenya'
+latlim = [-5,5]
+lonlim = [33,43]
+start_mon = [10,11,12] # OND, ND, D
+end_mon = [12,12,12] # OND, ND, D
 
 years = np.arange(1993,2016+1,1)
 center_ids = ['ecmwf_sys5','ukmo_sys13','meteofrance_sys6','dwd_sys2'] # modelling center names
@@ -101,15 +101,29 @@ def do_stuff(model,month_start,month_end,month_lead,region,lonlim,latlim):
       # Get forecast data accumulated through time
       r_start = datetime.strptime(str(years[y])+'/'+mon_string(month_start-month_lead)+'/01','%Y/%m/%d')
       f_start = r_start + timedelta(days=30*month_lead)
-      f_end = r_start + timedelta(days=30*(1+month_lead+month_end-month_start))
+
+      if month_start < month_end:
+        f_end = r_start + timedelta(days=30*(month_lead+(month_end-month_start+1)))
+      elif month_start > month_end: # allows to cross year boundary, e.g. DJF
+        f_end = r_start + timedelta(days=30*(month_lead+((month_end+month_start)-month_start+1)))
+
       if y == 0:
         print 'lead '+str(month_lead)
         print f_start
         print f_end
-      c3s_id = np.where(c3s_dates == f_end)[0]
-      if len(c3s_id) > 0:
-        for nm in np.arange(0,c3s_nmembers[model]):
-          all_c3s[y,nm,:,:] = np.flip((c3s_tp[c3s_id,nm,:,:])*1000.,axis=1).squeeze()
+
+      # find start and end dates in forecast
+      st_id = np.where(c3s_dates == f_start)[0]
+      ed_id = np.where(c3s_dates == f_end)[0]
+      if (len(st_id) > 0) & (len(ed_id)>0):
+        all_c3s[y,:,:,:] = np.flip((c3s_tp[ed_id,:,:,:]-c3s_rfe[st_id,:,:,:])*1000.,axis=2).squeeze()
+      elif (len(st_id) == 0):
+        all_c3s[y,:,:,:] = np.flip(c3s_tp[ed_id,:,:,:]*1000.,axis=2).squeeze()
+      else:
+        print 'error with time subsetting: check forecast start and end dates'
+        xxx
+        # for nm in np.arange(0,c3s_nmembers[model]):
+          # all_c3s[y,nm,:,:] = np.flip((c3s_tp[ed_id,nm,:,:]-c3s_rfe[st_id,nm,:,:])*1000.,axis=1).squeeze()
           # all_c3s[y,nm,:,:] = basemap.interp(tmp,c3s_lon,c3s_lat,rg_lon,rg_lat,order=0)
 
     nc_outfile = dir_out+center_ids[model]+'_total_rainfall_'+region+'_s'+mon_string(month_start)+'_e'+mon_string(month_end)+'_lead'+str(month_lead)+'.nc'

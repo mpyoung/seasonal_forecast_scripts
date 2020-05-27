@@ -13,10 +13,10 @@ for model in $(seq 0 0); do
     #BSUB -J matt_py_job
     #BSUB -n 1
     #BSUB -W 10:00
-    python download_c3s_seasonal.py $model $m 2>> ${err_dir}err_dl${s}.log >> ${err_dir}out_dl${s}.log
-    " >> job_dl${s}.sh
-    bsub < job_dl${s}.sh
-    rm job_dl${s}.sh
+    python download_c3s_seasonal.py $model $m 2>> ${err_dir}err_dl${m}.log >> ${err_dir}out_dl${m}.log
+    " >> job_dl${m}.sh
+    bsub < job_dl${m}.sh
+    rm job_dl${m}.sh
 
   done
 done
