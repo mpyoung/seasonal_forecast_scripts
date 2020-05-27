@@ -126,10 +126,10 @@ def do_stuff(model,month_start,month_end,month_lead,region,lonlim,latlim):
       # Get chirps data for corresponding forecast dates
       r_start = datetime.strptime(str(years[y])+'/'+mon_string(month_start-month_lead)+'/01','%Y/%m/%d')
       f_start = r_start + timedelta(days=30*month_lead)
-      if month_start < month_end:
-        f_end = r_start + timedelta(days=30*(month_lead+(month_end-month_start+1)))
-      elif month_start > month_end: # allows to cross year boundary, e.g. DJF 
+      if month_start > month_end: # allows to cross year boundary, e.g. DJF
         f_end = r_start + timedelta(days=30*(month_lead+((month_end+month_start)-month_start+1)))
+      else:
+        f_end = r_start + timedelta(days=30*(month_lead+(month_end-month_start+1)))
 
       if y == 0:
         print 'lead '+str(month_lead)
