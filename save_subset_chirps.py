@@ -112,17 +112,6 @@ def do_stuff(model,month_start,month_end,month_lead,region,lonlim,latlim):
 
     for y in np.arange(0,len(years)):
       print years[y]
-      # open chirps data for the equivalent year and regrid to c3s grid
-      obs_file = dir_obs+'chirps-v2.0.'+str(years[y])+'.days_p05_Africa.nc'
-      if (os.path.isfile(obs_file) == True):
-        nc_fid_chp = []
-        nc_fid_chp = Dataset(obs_file, 'r')
-        t_time = np.array(nc_fid_chp.variables['time'][:])
-        t_units = str(nc_fid_chp.variables['time'].units)
-        nc_fid_chp.close()
-        # convert time to date using netCDF4 function
-        chp_dates = nc4.num2date(t_time,t_units)
-
       # Get chirps data for corresponding forecast dates
       r_start = datetime.strptime(str(years[y])+'/'+mon_string(month_start-month_lead)+'/01','%Y/%m/%d')
       f_start = r_start + timedelta(days=30*month_lead)
@@ -131,19 +120,65 @@ def do_stuff(model,month_start,month_end,month_lead,region,lonlim,latlim):
       else:
         f_end = r_start + timedelta(days=30*(month_lead+(month_end-month_start+1)))
 
+
+      # open chirps data for the equivalent year and regrid to c3s grid
+      obs_file1 = dir_obs+'chirps-v2.0.'+str(f_start.year)+'.days_p05_Africa.nc'
+      obs_file2 = dir_obs+'chirps-v2.0.'+str(f_end.year)+'.days_p05_Africa.nc'
+
+      if (obs_file1==obs_file2)&(os.path.isfile(obs_file1) == True):
+        nc_fid_chp = []
+        nc_fid_chp = Dataset(obs_file, 'r')
+        t_time = np.array(nc_fid_chp.variables['time'][:])
+        t_units = str(nc_fid_chp.variables['time'].units)
+        nc_fid_chp.close()
+        # convert time to date using netCDF4 function
+        chp_dates = nc4.num2date(t_time,t_units)
+        chp_start_id = np.where(chp_dates == f_start)[0]
+        chp_end_id = np.where(chp_dates == f_end)[0]
+        chp_time_id = np.arange(chp_start_id,chp_end_id+1)
+        nc_fid_chp = Dataset(obs_file1, 'r')
+        tmp = []
+        tmp =np.array(nc_fid_chp.variables['precip'][chp_time_id,:,:][:,lat_id,:][:,:,lon_id],dtype='d').squeeze()
+        nc_fid_chp.close()
+        tmp[tmp<0] = np.nan
+        all_chp[y,:,:] = basemap.interp(np.sum(tmp,axis=0),chp_lon,chp_lat,rg_lon,rg_lat,order=0)
+      else:
+        nc_fid_chp = []
+        nc_fid_chp = Dataset(obs_file1, 'r')
+        t_time = np.array(nc_fid_chp.variables['time'][:])
+        t_units = str(nc_fid_chp.variables['time'].units)
+        nc_fid_chp.close()
+        # convert time to date using netCDF4 function
+        chp_dates1 = nc4.num2date(t_time,t_units)
+        nc_fid_chp = []
+        nc_fid_chp = Dataset(obs_file2, 'r')
+        t_time = np.array(nc_fid_chp.variables['time'][:])
+        t_units = str(nc_fid_chp.variables['time'].units)
+        nc_fid_chp.close()
+        # convert time to date using netCDF4 function
+        chp_dates2 = nc4.num2date(t_time,t_units)
+
+        chp_start_id = np.where(chp_dates1 >= f_start)[0]
+        chp_end_id = np.where(chp_dates2 <= f_end)[0]
+
+        nc_fid_chp1 = Dataset(obs_file1, 'r')
+        nc_fid_chp2 = Dataset(obs_file2, 'r')
+
+        tmp = []
+        tmp =np.vstack((np.array(nc_fid_chp1.variables['precip'][chp_start_id,:,:][:,lat_id,:][:,:,lon_id],dtype='d').squeeze(),np.array(nc_fid_chp2.variables['precip'][chp_end_id,:,:][:,lat_id,:][:,:,lon_id],dtype='d').squeeze()))
+        nc_fid_chp1.close()
+        nc_fid_chp2.close()
+
+        tmp[tmp<0] = np.nan
+
+        all_chp[y,:,:] = basemap.interp(np.sum(tmp,axis=0),chp_lon,chp_lat,rg_lon,rg_lat,order=0)
+
       if y == 0:
         print 'lead '+str(month_lead)
         print f_start
         print f_end
-      chp_start_id = np.where(chp_dates == f_start)[0]
-      chp_end_id = np.where(chp_dates == f_end)[0]
-      chp_time_id = np.arange(chp_start_id,chp_end_id+1)
-      nc_fid_chp = Dataset(obs_file, 'r')
-      tmp = []
-      tmp =np.array(nc_fid_chp.variables['precip'][chp_time_id,:,:][:,lat_id,:][:,:,lon_id],dtype='d').squeeze()
-      nc_fid_chp.close()
-      tmp[tmp<0] = np.nan
-      all_chp[y,:,:] = basemap.interp(np.sum(tmp,axis=0),chp_lon,chp_lat,rg_lon,rg_lat,order=0)
+
+
 
     nc_outfile = dir_out+'CHIRPS_total_rainfall_'+region+'_s'+mon_string(month_start)+'_e'+mon_string(month_end)+'_lead'+str(month_lead)+'.nc'
     # save final array as netcdf

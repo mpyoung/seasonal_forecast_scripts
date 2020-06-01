@@ -33,11 +33,11 @@ dir_out = dir_main+'c3s_hindcasts/region_subsets/'
 # region = 'Africa'
 # latlim = [-35,35]
 # lonlim = [-20,52]
-region = 'Kenya'
-latlim = [-5,5]
-lonlim = [33,43]
-start_mon = [10,11,12] # OND, ND, D
-end_mon = [12,12,12] # OND, ND, D
+# region = 'Kenya'
+# latlim = [-5,5]
+# lonlim = [33,43]
+# start_mon = [10,11,12] # OND, ND, D
+# end_mon = [12,12,12] # OND, ND, D
 
 years = np.arange(1993,2016+1,1)
 center_ids = ['ecmwf_sys5','ukmo_sys13','meteofrance_sys6','dwd_sys2'] # modelling center names
